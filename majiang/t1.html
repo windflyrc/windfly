@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>动态表格</title>
+    <style>
+        table{
+            border: 1px solid;
+            margin: auto;
+            width: 500px;
+        }
+        td,th{
+            text-align: center;
+            border: 1px solid;
+        }
+        div{
+            text-align: center;
+            margin: 50px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 创建一个div块标签，在该块标签中添加三个输入信息（编号、姓名、性别）的框框、一个确认添加的按钮（添加）-->
+<div>
+    <input type="text" id="id" placeholder="请输入编号">
+    <input type="text" id="name"  placeholder="请输入姓名">
+    <input type="text" id="gender"  placeholder="请输入性别">
+    <input type="button" value="添加" id="btn_add">
+</div>
+
+<table>
+    <!-- 表格标题 -->
+    <caption>学生信息表</caption>
+    <!-- 表格第一行：表格表头 -->
+    <tr>
+        <th>编号</th>
+        <th>姓名</th>
+        <th>性别</th>
+        <th>操作</th>
+    </tr>
+
+    <!-- 表格第二行：学生信息2 -->
+    <tr>
+        <td>1</td>
+        <td>令狐冲</td>
+        <td>男</td>
+        <!-- 在该单元格中创建一个链接标签，void运算符来阻止href返回值，通过onclick事件(鼠标点击)属性来删除信息行-->
+        <td><a href="javascript:void(0);" onclick="deleteTr(this);">删除</a></td>
+    </tr>
+
+    <!-- 表格第三行：学生信息2 -->
+    <tr>
+        <td>2</td>
+        <td>任我行</td>
+        <td>男</td>
+        <!-- 在该单元格中创建一个链接标签，void运算符来阻止href返回值，通过onclick事件(鼠标点击)属性来删除信息行-->
+        <td><a href="javascript:void(0);" onclick="deleteTr(this);">删除</a></td>
+    </tr>
+
+    <!-- 表格第四行：学生信息3 -->
+    <tr>
+        <td>3</td>
+        <td>岳不群</td>
+        <td>?</td>
+        <!-- 在该单元格中创建一个链接标签，void运算符来阻止href返回值，通过onclick事件(鼠标点击)属性来删除信息行-->
+        <td><a href="javascript:void(0);" onclick="deleteTr(this);" >删除</a></td>
+    </tr>
+</table>
+
+<script>
+    // 1.获取按钮
+    var btn_add = document.getElementById("btn_add");
+    btn_add.onclick = function() {
+        // 2.1 获取文本框对象
+        var idObject = document.getElementById("id");
+        var nameObject = document.getElementById("name");
+        var genderObject = document.getElementById("gender");
+        // 2.2 获取文本框的内容
+        var id = idObject.value;
+        var name = nameObject.value;
+        var gender = genderObject.value;
+
+        //3.创建单元格，赋值单元格的标签体
+        // id 的 单元格
+        var td_id = document.createElement("td");              // 创建单元格
+        var text_id = document.createTextNode(id);             // 赋值给单元格的标签体
+        td_id.appendChild(text_id);
+        // name 的 单元格
+        var td_name = document.createElement("td");
+        var text_name = document.createTextNode(name);
+        td_name.appendChild(text_name);
+        //gender 的 单元格
+        var td_gender = document.createElement("td");
+        var text_gender = document.createTextNode(gender);
+        td_gender.appendChild(text_gender);
+        // a标签的单元格
+        var td_a = document.createElement("td");
+        var ele_a = document.createElement("a");
+        ele_a.setAttribute("href","javascript:void(0);");
+        ele_a.setAttribute("onclick","delTr(this);");
+        var text_a = document.createTextNode("删除");
+        ele_a.appendChild(text_a);                         // 为a标签写入文本内容："删除"
+        td_a.appendChild(ele_a);                           // 为td标签添加子标签（a标签）
+
+        // 4.创建表格行
+        var tr = document.createElement("tr");
+        // 5.添加单元格到表格行中
+        tr.appendChild(td_id);
+        tr.appendChild(td_name);
+        tr.appendChild(td_gender);
+        tr.appendChild(td_a);
+        // 6.获取table
+        var table = document.getElementsByTagName("table")[0];
+        table.appendChild(tr);
+    };
+
+    // 删除方法
+    function deleteTr(object) {
+        // 获取table节点
+        var table = object.parentNode.parentNode.parentNode;
+        // 获取te节点
+        var tr = object.parentNode.parentNode;
+        // 删除（并返回）当前节点的指定子节点。
+        table.removeChild(tr);
+    }
+
+
+</script>
+
+</body>
+</html>

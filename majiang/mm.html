@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <title>Vue3 麻将游戏</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        h1 {
+            height: 200px;
+            width: 200px;
+            background-color: rgba(255,0,0,0);
+            display: block;
+            margin: 100px auto;
+            text-align: center;
+            border-radius:100px
+        }
+        h1:hover {
+            transform: scale(1.5);
+        }
+        h1:active {
+            background-color: yellow;
+        }
+        ul {
+            display: flex;
+            padding-top: 200px;
+            margin: 0 auto;
+            width: 900px;
+        }
+        li:hover {
+            cursor:pointer;
+            transform:scale(1.2)
+        }
+        li {
+            text-align: center;
+            width: 60px;
+            height: 80px;
+            list-style: none;
+            margin: 5px auto;
+            background-color: #f6ecdc;
+            background-size:100% 100%;
+            background-repeat:no-repeat;
+            border-radius: 8px;
+        }
+        li:active {
+            background-color: rgb(255,255,255);
+        }
+    </style>
+</head>
+<body style="background-color: #393737">
+<div id="app">
+    <ul >
+        <li v-for="(card, index) in handCards" :key="index"
+            :style="{ backgroundImage: `url(img/${card.rank + card.suit}.png)` }"
+            @click="playCard(index)">
+        </li>
+    </ul>
+    <h1 id="hp" 
+        :style="{ backgroundColor: isWin ? 'rgba(255,0,0,1)' : 'rgba(255,0,0,0)' }"
+        @click="showWinMessage">
+        胡牌!
+    </h1>
+</div>
+
+<script>
+const { createApp, ref, computed } = Vue;
+
+function Card(rank, suit) {
+    this.rank = rank;
+    this.suit = suit;
+    this.getSuit = function() {
+        if(this.suit === "wan") return 1;
+        if(this.suit === "tiao") return 2;
+        if(this.suit === "tong") return 3;
+    }
+    this.value = function() {
+        return this.rank * 10 + this.getSuit();
+    }
+}
+
+function Mj() {
+    this.duck = [];
+    this.newMj = function() {
+        const suits = ["wan", "tiao", "tong"];
+        for(let k = 0; k < 4; k++) {
+            for(let i = 0; i < 3; i++) {
+                for(let j = 0; j < 9; j++) {
+                    this.duck.push(new Card(j + 1, suits[i]));
+                }
+            }
+        }
+    }
+    this.shuffle = function() {
+        for(let j, x, i = this.duck.length; i; j = parseInt(Math.random() * i), 
+            x = this.duck[--i], this.duck[i] = this.duck[j], this.duck[j] = x);
+    }
+    this.newMj();
+}
+
+function Arth() {
+
+    this.sortCard = function (card) {
+        let c = [];
+        let temArr = [];
+        card.sort(function (a, b) {
+            return a.getSuit() - b.getSuit()
+        })
+        for (let i = 0; i <= card.length - 1; i++) {
+            temArr.push(card[i]);
+            if (i === card.length - 1) {
+                temArr.sort((a, b) => a.rank - b.rank);
+                c = [...c, ...temArr];
+                temArr.splice(0, i + 1);
+                break
+            } else if (card[i + 1].suit !== card[i].suit) {
+                temArr.sort((a, b) => a.rank - b.rank);
+                c = [...c, ...temArr];
+                temArr.splice(0, i + 1);
+            }
+        }
+        c.push()
+        return c
+    }
+    /***
+     *
+     * @param c Card对象
+     * @param i 从第几位开始删除
+     * @param n 删除几个元素
+     */
+    this.del = function (c, i, n) {
+        return c = [...c.splice(0, i), ...c.splice(n, c.length - n)]
+    }
+
+    this.findJiang = function (c) {
+        let j = 1
+
+        for (let i = 0; i < c.length - 1; i++) {
+            if (c[i].value() === c[j].value()) {
+                if (this.ifshun(this.del(Array.from(c), i, 2))) {
+                    return true
+                }
+            }
+            j++
+        }
+        return false
+    }
+    this.ifshun = function (c) {
+        if (c.length === 0) {
+            return true;
+        }
+        for (let i = 0; i < c.length - 2; i++) {
+            if ((c[i + 2].rank - c[i + 1].rank === c[i + 1].rank - c[i].rank && c[i + 2].rank - c[i + 1].rank === 1) &&
+                (c[i].suit === c[i + 1].suit && c[i + 1].suit === c[i + 2].suit)) {
+                return this.ifshun(this.del(c, i, 3))
+            }
+            if (c[i + 2].value() === c[i + 1].value() && c[i + 1].value() === c[i].value()) {
+                return this.ifshun(this.del(c, i, 3))
+            }
+            if (c[i + 1].value() === c[i + 2].value()) {
+                let tem = []
+                tem = c[i + 1]
+                c[i + 1] = c[i]
+                c[i] = tem
+                return this.ifshun(c)
+            }
+        }
+        return false;
+    }
+}
+
+createApp({
+    data() {
+        const mj = new Mj();
+        mj.shuffle();
+        
+        return {
+            mj,
+            handCards: [],
+            isWin: false
+        }
+    },
+    methods: {
+        getInitialCards() {
+            console.log('Initializing cards...');
+            console.log('Total cards:', this.mj.duck.length);
+            
+            // 确保mj.duck包含正确的数据
+            console.log('First 5 cards:', this.mj.duck.slice(0, 5));
+            
+            for(let i = 0; i <= 12; i++) {
+                if(this.mj.duck.length > 0) {
+                    const card = this.mj.duck.shift();
+                    console.log('Adding card:', card);
+                    // 确保card对象包含正确的属性
+                    if(!card.rank || !card.suit) {
+                        console.error('Invalid card:', card);
+                        continue;
+                    }
+                    this.handCards.push(new Card(card.rank, card.suit));
+                }
+            }
+            
+            console.log('Hand cards before sort:', this.handCards);
+            this.handCards = new Arth().sortCard(this.handCards);
+            console.log('Hand cards after sort:', this.handCards);
+            
+
+        },
+        playCard(index) {
+            this.handCards.splice(index, 1);
+            const card = this.mj.duck.shift();
+            this.handCards.push(new Card(card.rank, card.suit));
+            this.handCards = new Arth().sortCard(this.handCards);
+            this.isWin = new Arth().findJiang(this.handCards);
+        },
+        showWinMessage() {
+            if(this.isWin) {
+                alert("胡牌了");
+            }
+        }
+    },
+    mounted() {
+        this.getInitialCards();
+    }
+}).mount('#app');
+</script>
+</body>
+</html>
