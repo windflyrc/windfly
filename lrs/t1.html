@@ -7,23 +7,16 @@
     <title>Document</title>
     <script src="vue.global.js"></script>
     <style>
-      /*  .select-panel {
+        /* 样式定义 */
+        .select-panel {
             position: absolute;
-            background: white;
+            background-color: white;
             border: 1px solid #ccc;
             padding: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
+            width: 100px;
+            height: 150px;
+            z-index: 1;
         }
-
-        .number-grid button {
-            margin: 2px;
-            padding: 5px 10px;
-        }
-            */
-
-
-
     </style>
 </head>
 
@@ -32,12 +25,15 @@
         <h1>Vue 3.0 组件通信</h1>
       
         <div>
-            <selecter @go="update"></selecter> <!-- 使用小写组件名称 -->
-            <shangjing @shangjing="updatesj"></shangjing> <!-- 使用小写组件名称 -->
+            <!-- 选择器组件 -->
+            <selecter @go="update"></selecter>
+            <!-- 上警组件 -->
+            <shangjing @shangjing="updatesj"></shangjing>
             <p>踩：{{ num }}，上警：{{shangjing}}</p>
         </div>
     </div>
     <script>
+            // 定义 Player 类
         class Player {
             constructor(rank) {
                 this.rank = rank;
@@ -47,8 +43,6 @@
                 this.shenfen = [];
             }
         }
-
-
 
         // 创建 Vue 应用实例
         const app = Vue.createApp({
@@ -67,15 +61,8 @@
                     <th>身份</th>
                 </tr>
             </thead>
-            <!-- <tr v-for="(row, rowIndex) in 6" :key="rowIndex">
-                <td v-for="(col, colIndex) in 10" :key="colIndex">
-                    <player :position2="colIndex" :position1="row"></player> 
-            </tr> -->
             <tbody>
-               
-                    <player v-for="i in 6"> </player>
-                    <player v-for="i in 6"> </player>
-                
+                    <player v-for="i in 6" :position="i" @playerData="newPlayer"> </player>
             </tbody>
         </table>`,
                 
@@ -83,35 +70,50 @@
                 return {
                     num: [], // 存储选中的数字数组
                     shangjing: false, // 上警状态
+                    player: [] // 存储玩家数据
                 }
             },
             methods: {
-                update(f) { // 更新数字数组的方法
+                // 更新数字数组的方法
+                update(f) {
                     this.num = f
                 },
-                updatesj(f) { // 更新上警状态
+                // 更新上警状态的方法
+                updatesj(f) {
                     this.shangjing = f
+                },
+                // 新增玩家数据的方法
+                newPlayer(p) {
+                    if (this.player.length > 5) {
+                        this.player[p.rank - 1] = p
+                    }
+                    else {
+                        this.player.push(p)
+                    }
+                    console.log(this.player)
+                },
+                update() {
+
                 }
             },
         });
 
-        app.component('selecter', { // 使用小写组件名称
-            emits: ['go'], // 声明组件要触发的事件
+            // 定义选择器组件
+            app.component('selecter', {
+                emits: ['go'],
             template: `
                 <div>
-                    <button @click="dis=true">+</button> <!-- 显示选择面板的按钮 -->
+                    <button @click="dis=true">+</button>
                     <div v-if="dis" class="select-panel">
                         <div class="number-grid">
-                            <!-- 创建 4x3 的数字按钮网格 -->
                             <div v-for="i in 4" :key="i">
                                 <button :disabled="buttons.includes((i-1)*3+j)" 
                                         v-for="j in 3" 
                                         @click="add((i-1)*3+j);emit()">{{ (i-1)*3+j }}</button>
                             </div>
-                            <button @click="dis=false">close</button> <!-- 关闭选择面板 -->
+                            <button @click="dis=false">close</button>
                         </div>
                     </div>
-                    <!-- 显示已选中的数字，点击可删除 -->
                     <button v-for="btn in sortedButtons" 
                             :key="btn" 
                             @click="buttons = buttons.filter(item => item !== btn);emit()">{{ btn }}</button>
@@ -123,15 +125,15 @@
                 }
             },
             computed: {
-                sortedButtons() { // 对选中的数字进行排序
+                sortedButtons() {
                     return this.buttons.sort((a, b) => a - b)
                 }
             },
             methods: {
-                add(btn) { // 添加选中的数字
+                add(btn) {
                     this.buttons.push(btn)
                 },
-                emit() { // 触发更新事件
+                emit() {
                     this.$emit('go', this.sortedButtons)
                 }
             },
@@ -139,7 +141,7 @@
 
         // 定义上警组件
         app.component('shangjing', {
-            emits: ['shangjing'], // 声明组件要触发的事件
+            emits: ['shangjing'],
             template: `
                 <div>
                     <button @click="add">{{ sjStedas }}</button>
@@ -152,7 +154,7 @@
                 }
             },
             methods: {
-                add() { // 添加上警状态
+                add() {
                     this.sjStedas = this.shangjing ? "下" : "上"
                     this.shangjing = !this.shangjing
                     this.$emit('shangjing', this.shangjing)
@@ -160,46 +162,56 @@
             },
         });
 
+            // 定义玩家组件
         app.component('player', {
+            props: ['position'],
+            emits: ['playerData'],
             
             template: `
             <tr>
-                <td v-for="i in cell">
-                    <component v-if="isComponent(i)" :is="i"></component>
+                <td v-for="(i,index) in cell " :key="i">
+                    <component v-if="isComponent(i)" :is="i" @shangjing="shangjing" @go="(f) => seleter(f, index)"></component>
                     <template v-else>{{ i }}</template>
                 </td>
-            
             </tr>`,
-            // `
-            //     <template v-if="position2 <=5">
-            //          <component v-if="isComponent(cell[position2])" :is="cell[position2]" @shangjing="(f)=>number=f" @mounted="change"></component>
-            //          <div v-else>{{ cell[position2] }}</div>
-            //     </template>`
 
             data() {
-                p = new Player(1)
-                rank = 0
+                p = new Player(this.position)
                 return {
-
+                    p, 
                     cell: [
                         "身份",
                         "selecter",
                         "selecter",
                         "shangjing",
-                        rank
+                        p.rank,
                     ],
                     number: false,
-
                 }
-
             },
             methods: {
                 isComponent(name) {
                     return name === "selecter" || name === "shangjing"
                 },
-
+                shangjing(f) {
+                    this.p.shangjing = f;
+                    this.uploadData()
+                },
+                seleter(f, i) {
+                    if (i === 1) {
+                        this.p.zhan = f
+                    } else if (i === 2) {
+                        this.p.cai = f
+                    }
+                    this.uploadData()
+                },
+                uploadData() {
+                    this.$emit('playerData', this.p)
+                }
             },
-
+            mounted() {
+                this.uploadData()
+            }
         });
 
         // 挂载 Vue 应用
