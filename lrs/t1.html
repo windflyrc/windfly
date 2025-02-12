@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>狼人杀模拟器</title>
     <script src="vue.global.js"></script>
     <style>
         /* 样式定义 */
@@ -18,7 +18,14 @@
             z-index: 1;
         }
         table {
+            border: 1px;;
             border-collapse: collapse;
+        }
+        .tableContainer {
+            display: flex;
+            align-items: center;
+            justify-content: center
+
         }
         
     </style>
@@ -42,7 +49,42 @@
 
         // 创建 Vue 应用实例
         const app = Vue.createApp({
-            template: `  <table border="1">
+            template: `  
+            <div class="tableContainer">
+            <template v-for="i in 2">
+                <table v-if="i===1" border="1">
+                    <thead>
+                        <tr>
+                            <th>身份</th>
+                            <th>站</th>
+                            <th>踩</th>
+                            <th>警</th>
+                            <th>号</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <player v-for="itable in 6" :position="(i-1)*6+itable" @playerData="newPlayer"> </player>
+                    </tbody>
+                </table>
+
+                 <table v-if="i===2" border="1">
+                    <thead>
+                        <tr>                           
+                            <th>号</th>
+                            <th>警</th>
+                            <th>踩</th>
+                            <th>站</th>
+                            <th>身份</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <player v-for="itable in 6" :position="(i-1)*6+itable" @playerData="newPlayer"> </player>
+                    </tbody>
+                </table>
+            </template>
+            </div>
+
+            <!-- <table border="1">
             <thead>
                 <tr>
                     <th>身份</th>
@@ -60,7 +102,7 @@
             <tbody>
                     <player v-for="i in 12" :position="i" @playerData="newPlayer"> </player>
             </tbody>
-        </table>`
+        </table> -->`
             ,
                 
             data() {
@@ -166,18 +208,15 @@
             
             template: `
             <tr>
-                <td v-for="(i,index) in liftSide " :key="i" v-if="position%2===1">
+                <td v-for="(i,index) in side " :key="i" >
                     <component v-if="isComponent(i)" :is="i" @shangjing="shangjing" @go="(f) => seleter(f, index)"></component>
                     <template v-else>{{ i }}</template>
                 </td>
-                <td v-for="(i,index) in rightSide " :key="i" v-if="position%2===0">
-                    <component v-if="isComponent(i)" :is="i" @shangjing="shangjing" @go="(f) => seleter(f, index)"></component>
-                    <template v-else>{{ i }}</template>
-                </td>
+
             </tr>`,
 
             data() {
-                p = new Player(this.position * 2 - 1)
+                p = new Player(this.position)
                 return {
                     p, 
                     cell: [
@@ -199,11 +238,20 @@
                     this.uploadData()
                 },
                 seleter(f, i) {
-                    if (i === 1) {
-                        this.p.zhan = f
-                    } else if (i === 2) {
-                        this.p.cai = f
+                    if(this.position>6){
+                        if (i === 3) {
+                            this.p.zhan = f
+                            } else if (i === 2) {
+                            this.p.cai = f
+                        }
+                    }else{
+                        if (i === 1) {
+                            this.p.zhan = f
+                            } else if (i === 2) {
+                            this.p.cai = f
+                        }
                     }
+                    
                     this.uploadData()
                 },
                 uploadData() {
@@ -211,14 +259,12 @@
                 },
             },
             computed: {
-                //控制左右表格显示
-                liftSide() {
+                side() {
+                    if(this.position>6){
+                        return [...this.cell].reverse();
+                    }
                     return this.cell;
-                },
-                rightSide() {
-                    return [...this.cell].reverse();
-                }
-            },
+            }},
             mounted() {
                 this.uploadData()
             }
