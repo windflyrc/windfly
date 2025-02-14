@@ -51,62 +51,56 @@
         const app = Vue.createApp({
             template: `  
             <div class="tableContainer">
-            <template v-for="i in 2">
-                <table v-if="i===1" border="1">
+
+                <table border="1" v-for="i in 2">
                     <thead>
                         <tr>
-                            <th>身份</th>
-                            <th>站</th>
-                            <th>踩</th>
-                            <th>警</th>
-                            <th>号</th>
+                            <th v-for="(head,index) in side(i)">{{ head.head }}</th>
                         </tr>
                     </thead>
                     <tbody>
-                            <player v-for="itable in 6" :position="(i-1)*6+itable" @playerData="newPlayer"> </player>
+                            <player v-for="itable in 6" :position="(i-1)*6+itable" :header="side(i)" @playerData="newPlayer"> </player>
                     </tbody>
                 </table>
 
-                 <table v-if="i===2" border="1">
-                    <thead>
-                        <tr>                           
-                            <th>号</th>
-                            <th>警</th>
-                            <th>踩</th>
-                            <th>站</th>
-                            <th>身份</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                            <player v-for="itable in 6" :position="(i-1)*6+itable" @playerData="newPlayer"> </player>
-                    </tbody>
-                </table>
-            </template>
+                
+
             </div>
 
-            <!-- <table border="1">
-            <thead>
-                <tr>
-                    <th>身份</th>
-                    <th>站</th>
-                    <th>踩</th>
-                    <th>警</th>
-                    <th>号</th>
-                    <th>号</th>
-                    <th>警</th>
-                    <th>踩</th>
-                    <th>站</th>
-                    <th>身份</th>
-                </tr>
-            </thead>
-            <tbody>
-                    <player v-for="i in 12" :position="i" @playerData="newPlayer"> </player>
-            </tbody>
-        </table> -->`
+          `
             ,
                 
             data() {
                 return {
+                    headers:[ 
+                        {
+                            "head":"身份",
+                            "index":1,
+                            "tag":"shenfen"
+                        }
+                        ,{
+                            "head":"站",
+                            "index":2,
+                            "tag":"zhan"
+                        }
+                        
+                        ,{
+                            "head":"踩",
+                            "index":3,
+                            "tag":"cai"
+                        }
+                        ,{
+                            "head":"警",
+                            "index":4,
+                            "tag":"shangjing"
+                        
+                        }
+                        ,{
+                            "head":"号",
+                            "index":5,
+                            "tag":"rank"
+                        }
+                ],
                     num: [], // 存储选中的数字数组
                     shangjing: false, // 上警状态
                     player: [] // 存储玩家数据
@@ -133,7 +127,16 @@
                 },
                 update() {
 
-                }
+                },
+                side(i) {
+                    if(i==2){
+                        return [...this.headers].reverse();
+                    }
+                    return this.headers;
+            }
+            },
+            computed: {
+                
             },
         });
 
@@ -203,7 +206,7 @@
 
             // 定义玩家组件
         app.component('player', {
-            props: ['position'],
+            props: ['position','header'],
             emits: ['playerData'],
             
             template: `
@@ -238,20 +241,7 @@
                     this.uploadData()
                 },
                 seleter(f, i) {
-                    if(this.position>6){
-                        if (i === 3) {
-                            this.p.zhan = f
-                            } else if (i === 2) {
-                            this.p.cai = f
-                        }
-                    }else{
-                        if (i === 1) {
-                            this.p.zhan = f
-                            } else if (i === 2) {
-                            this.p.cai = f
-                        }
-                    }
-                    
+                    this.p[this.header[i].tag]=f                    
                     this.uploadData()
                 },
                 uploadData() {
