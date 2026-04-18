@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>狼人杀模拟器</title>
+    <script src="vue.global.js"></script>
+    <style>
+        /* 样式定义 */
+        .select-panel {
+            position: absolute;
+            background-color: rgb(139, 184, 191);
+            border: 1px solid #ccc;
+            padding: 10px;
+            z-index: 1;
+        }
+
+        table {
+            border: 1px;
+            ;
+            border-collapse: collapse;
+        }
+
+        .tableContainer {
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .sjRed {
+            background-color: red;
+        }
+
+        .isYellow {
+            background-color: yellow;
+        }
+    </style>
+</head>
+
+<body style="background-color: rgb(168, 173, 176);">
+    <div id="app">
+
+    </div>
+    <script>
+        // 定义 Player 类
+        window.Player=class Player {
+            constructor(rank) {
+                this.rank = rank;
+                this.shangjing = false;
+                this.cai = [];
+                this.zhan = [];
+                this.shenfen = [];
+            }
+        }
+
+        // 创建 Vue 应用实例
+        const app = Vue.createApp({
+            template: `  
+            <div class="tableContainer">
+
+                <table border="1" v-for="i in 2">
+                    <thead>
+                        <tr>
+                            <th v-for="(head,index) in side(i)">{{ head.head }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <player v-for="itable in 6" :position="(i-1)*6+itable" :header="side(i)" @playerData="newPlayer"> </player>
+                    </tbody>
+                </table>
+            </div>
+            <yuyanjia></yuyanjia>
+            <p v-for="i in 12" v-text="textReturn(i)"></p>
+            <grid :gridArray="num" @addBtn="(f) => test = f"></grid>
+            <a>{{test}}</a>
+
+          `
+            ,
+
+            data() {
+                return {
+                    headers: [
+                        {
+                            "head": "身份",
+                            "index": 1,
+                            "tag": "shenfen"
+                        }
+                        , {
+                            "head": "站",
+                            "index": 2,
+                            "tag": "zhan"
+                        }
+
+                        , {
+                            "head": "踩",
+                            "index": 3,
+                            "tag": "cai"
+                        }
+                        , {
+                            "head": "警",
+                            "index": 4,
+                            "tag": "shangjing"
+
+                        }
+                        , {
+                            "head": "号",
+                            "index": 5,
+                            "tag": "rank"
+                        }
+                    ],
+                    test: 0,
+                    num: [], // 存储选中的数字数组
+                    shangjing: false, // 上警状态
+                    player: Array(12).fill().map((_, index) => new Player(index + 1)), // 初始化12个玩家
+                    text: ""
+                }
+            },
+            methods: {
+                // 更新数字数组的方法
+                update(f) {
+                    this.num = f
+                },
+                // 更新上警状态的方法
+                updatesj(f) {
+                    this.shangjing = f
+                },
+                // 新增玩家数据的方法
+                newPlayer(p) {
+                    if (this.player.length > 5) {
+                        this.player[p.rank - 1] = p
+                    }
+                    else {
+                        this.player.push(p)
+                    }
+                    console.log(this.player)
+                },
+                update() {
+
+                },
+                side(i) {
+                    if (i == 2) {
+                        return [...this.headers].reverse();
+                    }
+                    return this.headers;
+                },
+                textReturn(i) {
+                    // 添加安全检查
+                    return this.player[i - 1].rank + "号玩家在警" + (this.player[i - 1].shangjing ? "上" : "下") + "，身份为：" + this.player[i - 1].shenfen + "，站队为：" + this.player[i - 1].zhan + "，踩队为：" + this.player[i - 1].cai;
+                }
+            },
+
+        });
+        app.component('grid', {
+            props: ['gridArray','show'],
+            emits: ['addBtn','closePanel'],
+            template: `
+            <div v-if="show" class="select-panel">
+                <div  >
+                    <div v-for="i in 4" :key="i">
+                        <button :disabled="gridArr().includes((i-1)*3+j)" 
+                            v-for="j in 3" 
+                            @click="addBtn((i-1)*3+j)"
+                            style= "width: 25px;height: 25px;align-items: center">{{ (i-1)*3+j }}
+                        </button>
+                    </div>
+                </div>
+                <button @click="$emit('closePanel')">close</button>
+            </div>
+            `,
+            data() {
+                return {
+                    
+                }
+            },
+            methods: {
+                addBtn(btn) {
+                    this.$emit('addBtn', btn)
+                },
+                gridArr() {
+                    if (Array.isArray(this.gridArray)) {
+                        return this.gridArray
+                    }
+                    return []
+                }
+            }
+        })
+
+        // 定义选择器组件
+        app.component('selecter', {
+            emits: ['go'],
+            props: ["playerArr"],
+            template: `
+                <div>
+                    <button @click="dis=true">+</button>
+
+                        <grid :gridArray="playerArr" :show="dis" @closePanel="dis=false" @addBtn="(f) => {add(f);emit()}"></grid>
+ 
+                    <button v-for="btn in sortedButtons" 
+                            :key="btn" 
+                            @click="buttons = buttons.filter(item => item !== btn);emit()">{{ btn }}</button>
+                </div>`,
+            data() {
+                return {
+                    dis: false, // 控制选择面板的显示/隐藏
+                    buttons: [] // 存储已选中的按钮
+                }
+            },
+            computed: {
+                sortedButtons() {
+                    return this.buttons.sort((a, b) => a - b)
+                }
+            },
+            methods: {
+                add(btn) {
+                    this.buttons.push(btn)
+                },
+                emit() {
+                    this.$emit('go', this.sortedButtons)
+                }
+            },
+        });
+
+        // 定义上警组件
+        app.component('shangjing', {
+            emits: ['shangjing'],
+            template: `
+                <div>
+                    <button @click="add" :class="sjClass">{{ sjStedas }}</button>
+                </div>
+            `,
+            data() {
+                return {
+                    shangjing: false, // 上警状态
+                    sjStedas: "下", // 按钮显示文本
+                    sjClass: "sjRed"
+                }
+            },
+            methods: {
+                add() {
+                    this.sjClass = this.shangjing ? "sjRed" : "isYellow";
+                    this.sjStedas = this.shangjing ? "下" : "上"
+                    this.shangjing = !this.shangjing
+                    this.$emit('shangjing', this.shangjing)
+                }
+            },
+        });
+
+        // 定义玩家组件
+        app.component('player', {
+            props: ['position', 'header'],
+            emits: ['playerData'],
+
+            template: `
+            <tr>
+                <td v-for="(i,index) in side " :key="i" >
+                    <component v-if="isComponent(i)" :is="i" :playerArr=playerCaiZhan() @shangjing="shangjing" @go="(f) => seleter(f, index)"></component>
+                    <template v-else>{{ i }}</template>
+                </td>
+
+            </tr>`,
+
+            data() {
+                p = new Player(this.position)
+                return {
+                    p,
+                    cell: [
+                        "身份",
+                        "selecter",
+                        "selecter",
+                        "shangjing",
+                        p.rank,
+                    ],
+                    number: false,
+                }
+            },
+            methods: {
+                isComponent(name) {
+                    return name === "selecter" || name === "shangjing"
+                },
+                shangjing(f) {
+                    this.p.shangjing = f;
+                    this.uploadData()
+                },
+                seleter(f, i) {
+                    this.p[this.header[i].tag] = f
+                    this.uploadData()
+                },
+                uploadData() {
+                    this.$emit('playerData', this.p)
+                },
+                playerCaiZhan() {
+                    return [...this.p.zhan, ...this.p.cai];
+                }
+            },
+            computed: {
+                side() {
+                    if (this.position > 6) {
+                        return [...this.cell].reverse();
+                    }
+                    return this.cell;
+                }
+            },
+            mounted() {
+                this.uploadData()
+            }
+        });
+
+        app.component('yuyanjia', {
+            
+            template: `
+                <div>
+                    <button @click="show=true">添加预言家</button>
+                    <grid :show="show" @closePanel="show=false" @addBtn="(f)=>{addYyj(f);show=false;yuyanjiaNum++}"></grid>
+                    <table border="1" >
+                        <thead>
+                            <tr>
+                                <th>预言家</th>
+                                <th>查杀</th>
+                                <th>金水</th>
+                                <th>狼坑</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="i in yuyanjiaNum">
+                                <td>{{yuyanjia[i-1].rank}}</td>
+                                <td><selecter></selecter></td>
+                                <td><selecter></selecter></td>
+                                <td><selecter></selecter></td>
+                            </tr>
+                        </tbody>
+                        
+                        
+                    </table>
+                    {{yuyanjia}}
+                </div>
+                `,
+            data() {
+                return {
+                    show: false,
+                    yuyanjia:[],
+                    yuyanjiaNum:0
+                }
+            },
+            methods: {
+                addYyj(yyj) {
+                    this.yuyanjia.push(new Player(yyj))
+                }
+
+            }
+
+        })
+
+        // 挂载 Vue 应用
+        app.mount('#app');
+    </script>
+</body>
+
+</html>
